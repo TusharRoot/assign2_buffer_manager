@@ -5,6 +5,7 @@
 
 /* module wide constants */
 #define PAGE_SIZE 4096
+#define BUFFER_SIZE 16
 
 /* return code definitions */
 typedef int RC;

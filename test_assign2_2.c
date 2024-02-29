@@ -151,6 +151,8 @@ testError (void)
 {
     BM_BufferPool *bm = MAKE_POOL();
     BM_PageHandle *h = MAKE_PAGE_HANDLE();
+    BM_PageHandle *h2 = MAKE_PAGE_HANDLE();
+    BM_PageHandle *h3 = MAKE_PAGE_HANDLE();
     testName = "ERROR TEST";
     
     CHECK(createPageFile("testbuffer.bin"));
@@ -158,10 +160,16 @@ testError (void)
     // pinpage until buffer pool is full and then request additional page.
     CHECK(initBufferPool(bm, "testbuffer.bin", 3, RS_FIFO, NULL));
     CHECK(pinPage(bm, h, 0));
-    CHECK(pinPage(bm, h, 1));
-    CHECK(pinPage(bm, h, 2));
+    CHECK(pinPage(bm, h2, 1));
+    CHECK(pinPage(bm, h3, 2));
     
     ASSERT_ERROR(pinPage(bm, h, 3), "try to pin page when pool is full of pinned pages with fix-count > 0");
+
+    // "It is an error to shutdown a buffer pool that has pinned pages."
+    // the pages must be unpinned before shutting down
+    CHECK(unpinPage(bm, h));
+    CHECK(unpinPage(bm, h2));
+    CHECK(unpinPage(bm, h3));
     
     CHECK(shutdownBufferPool(bm));
     
@@ -190,5 +198,7 @@ testError (void)
     
     free(bm);
     free(h);
+    free(h2);
+    free(h3);
     TEST_DONE();
 }
