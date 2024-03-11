@@ -108,9 +108,9 @@ RC destroyPageFile(char *fileName) {
 
 /* reading blocks from disc */
 
-RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
-    // Check if pageNum is in range
-    if (pageNum < 0 || pageNum >= fHandle->totalNumPages) 
+RC readBlock(int pageNumbering, SM_FileHandle *fHandle, SM_PageHandle memPage) {
+    // Check if pageNumbering is in range
+    if (pageNumbering < 0 || pageNumbering >= fHandle->totalNumPages) 
         return RC_READ_NON_EXISTING_PAGE;
 
     FILE *fp = (FILE *)fHandle->mgmtInfo;
@@ -118,7 +118,7 @@ RC readBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
     int attempt = 0;
     int fseekResult;
     do {
-        fseekResult = fseek(fp, pageNum * PAGE_SIZE, SEEK_SET);
+        fseekResult = fseek(fp, pageNumbering * PAGE_SIZE, SEEK_SET);
         if (fseekResult == 0) {
             // Read the page into memPage
             size_t bytesRead = fread(memPage, sizeof(char), PAGE_SIZE, fp);
@@ -157,25 +157,25 @@ RC readPreviousBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) {
     if (fHandle->curPagePos <= 0)
         return RC_READ_NON_EXISTING_PAGE;
 
-    // Calculate the previous pageNum
-    int pageNum = fHandle->curPagePos - 1;
+    // Calculate the previous pageNumbering
+    int pageNumbering = fHandle->curPagePos - 1;
 
     // Initialize result variable
     RC result;
 
     // Loop until a valid page is read or non-existing page is encountered
-    while (pageNum >= 0) {
+    while (pageNumbering >= 0) {
         // Call readBlock function to read the previous block
-        result = readBlock(pageNum, fHandle, memPage);
+        result = readBlock(pageNumbering, fHandle, memPage);
 
         // If the block was successfully read, update curPagePos and break the loop
         if (result == RC_OK) {
-            fHandle->curPagePos = pageNum;
+            fHandle->curPagePos = pageNumbering;
             break;
         }
 
-        // Decrement pageNum for the next iteration
-        pageNum--;
+        // Decrement pageNumbering for the next iteration
+        pageNumbering--;
     }
 
     return result;
@@ -187,17 +187,17 @@ RC readCurrentBlock (SM_FileHandle *fHandle, SM_PageHandle memPage)
 }
 
 RC readNextBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) {
-    // Calculate the next pageNum
-    int pageNum = fHandle->curPagePos + 1;
+    // Calculate the next pageNumbering
+    int pageNumbering = fHandle->curPagePos + 1;
 
     // Loop through the remaining pages to attempt reading
-    for (; pageNum < fHandle->totalNumPages; pageNum++) {
+    for (; pageNumbering < fHandle->totalNumPages; pageNumbering++) {
         // Attempt to read the next block
-        RC result = readBlock(pageNum, fHandle, memPage);
+        RC result = readBlock(pageNumbering, fHandle, memPage);
 
         // If the block was successfully read, update curPagePos and return result
         if (result == RC_OK) {
-            fHandle->curPagePos = pageNum;
+            fHandle->curPagePos = pageNumbering;
             return result;
         }
     }
@@ -220,9 +220,9 @@ RC readLastBlock(SM_FileHandle *fHandle, SM_PageHandle memPage) {
 
 /* writing blocks to a page file */
 
-RC writeBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
-    // Check if pageNum is in range
-    if (pageNum < 0 || pageNum >= fHandle->totalNumPages) 
+RC writeBlock(int pageNumbering, SM_FileHandle *fHandle, SM_PageHandle memPage) {
+    // Check if pageNumbering is in range
+    if (pageNumbering < 0 || pageNumbering >= fHandle->totalNumPages) 
         return RC_READ_NON_EXISTING_PAGE;
     
     FILE *fp = (FILE *)fHandle->mgmtInfo;
@@ -230,7 +230,7 @@ RC writeBlock(int pageNum, SM_FileHandle *fHandle, SM_PageHandle memPage) {
     int attempt = 0;
     while (attempt < MAX_ATTEMPTS) {
         // Check to see if the position was set successfully
-        if (fseek(fp, pageNum * PAGE_SIZE, SEEK_SET) == 0) {
+        if (fseek(fp, pageNumbering * PAGE_SIZE, SEEK_SET) == 0) {
             size_t bytesToWrite = PAGE_SIZE;
             size_t totalBytesWritten = 0;
 

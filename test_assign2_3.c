@@ -28,15 +28,15 @@ main (void)
 void
 testInitShutDownBuffer (void)
 {
-  BM_BufferPool bm;
+  BM_BufferPool bufferManage;
   testName = "Initialize and shutdown buffer pool";
   char *pageFileName = "testbuffer.bin";
 
   CHECK(createPageFile(pageFileName));
 
-  CHECK(initBufferPool(&bm, pageFileName, 16, RS_LRU, NULL));
-  CHECK(forceFlushPool(&bm));
-  CHECK(shutdownBufferPool(&bm));
+  CHECK(initBufferPool(&bufferManage, pageFileName, 16, RS_LRU, NULL));
+  CHECK(forceFlushPool(&bufferManage));
+  CHECK(shutdownBufferPool(&bufferManage));
 
   CHECK(destroyPageFile(pageFileName));
 

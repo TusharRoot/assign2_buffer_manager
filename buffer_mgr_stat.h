@@ -4,9 +4,9 @@
 #include "buffer_mgr.h"
 
 // debug functions
-void printPoolContent (BM_BufferPool *const bm);
+void printPoolContent (BM_BufferPool *const bufferManage);
 void printPageContent (BM_PageHandle *const page);
-char *sprintPoolContent (BM_BufferPool *const bm);
+char *sprintPoolContent (BM_BufferPool *const bufferManage);
 char *sprintPageContent (BM_PageHandle *const page);
 
 #endif

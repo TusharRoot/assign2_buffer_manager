@@ -9,7 +9,7 @@ Aim - Creating a basic buffer manager pool. It has caches file counts into memor
 ## Running Tests
 
 To build the buffer manager as well the first set of test cases in test_assign2_1.c, use
-./test_assign2_1.o
+
 ```bash
 make
 ./test_assign2_1.o

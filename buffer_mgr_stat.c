@@ -5,47 +5,47 @@
 #include <stdlib.h>
 
 // local functions
-static void printStrat (BM_BufferPool *const bm);
+static void printStrat (BM_BufferPool *const bufferManage);
 
 // external functions
 void 
-printPoolContent (BM_BufferPool *const bm)
+printPoolContent (BM_BufferPool *const bufferManage)
 {
 	PageNumber *frameContent;
-	bool *dirty;
+	bool *isDirty;
 	int *fixedCount;
 	int i;
 
-	frameContent = getFrameContents(bm);
-	dirty = getDirtyFlags(bm);
-	fixedCount = getFixCounts(bm);
+	frameContent = getFrameContents(bufferManage);
+	isDirty = getDirtyFlags(bufferManage);
+	fixedCount = getFixCounts(bufferManage);
 
 	printf("{");
-	printStrat(bm);
-	printf(" %i}: ", bm->numPages);
+	printStrat(bufferManage);
+	printf(" %i}: ", bufferManage->numberOfPages);
 
-	for (i = 0; i < bm->numPages; i++)
-		printf("%s[%i%s%i]", ((i == 0) ? "" : ",") , frameContent[i], (dirty[i] ? "x": " "), fixedCount[i]);
+	for (i = 0; i < bufferManage->numberOfPages; i++)
+		printf("%s[%i%s%i]", ((i == 0) ? "" : ",") , frameContent[i], (isDirty[i] ? "x": " "), fixedCount[i]);
 	printf("\n");
 }
 
 char *
-sprintPoolContent (BM_BufferPool *const bm)
+sprintPoolContent (BM_BufferPool *const bufferManage)
 {
 	PageNumber *frameContent;
-	bool *dirty;
+	bool *isDirty;
 	int *fixedCount;
 	int i;
 	char *message;
 	int pos = 0;
 
-	message = (char *) malloc(256 + (22 * bm->numPages));
-	frameContent = getFrameContents(bm);
-	dirty = getDirtyFlags(bm);
-	fixedCount = getFixCounts(bm);
+	message = (char *) malloc(256 + (22 * bufferManage->numberOfPages));
+	frameContent = getFrameContents(bufferManage);
+	isDirty = getDirtyFlags(bufferManage);
+	fixedCount = getFixCounts(bufferManage);
 
-	for (i = 0; i < bm->numPages; i++)
-		pos += sprintf(message + pos, "%s[%i%s%i]", ((i == 0) ? "" : ",") , frameContent[i], (dirty[i] ? "x": " "), fixedCount[i]);
+	for (i = 0; i < bufferManage->numberOfPages; i++)
+		pos += sprintf(message + pos, "%s[%i%s%i]", ((i == 0) ? "" : ",") , frameContent[i], (isDirty[i] ? "x": " "), fixedCount[i]);
 
 	return message;
 }
@@ -56,10 +56,10 @@ printPageContent (BM_PageHandle *const page)
 {
 	int i;
 
-	printf("[Page %i]\n", page->pageNum);
+	printf("[Page %i]\n", page->pageNumbering);
 
 	for (i = 1; i <= PAGE_SIZE; i++)
-		printf("%02X%s%s", page->data[i], (i % 8) ? "" : " ", (i % 64) ? "" : "\n");
+		printf("%02X%s%s", page->datas[i], (i % 8) ? "" : " ", (i % 64) ? "" : "\n");
 }
 
 char *
@@ -70,18 +70,18 @@ sprintPageContent (BM_PageHandle *const page)
 	int pos = 0;
 
 	message = (char *) malloc(30 + (2 * PAGE_SIZE) + (PAGE_SIZE % 64) + (PAGE_SIZE % 8));
-	pos += sprintf(message + pos, "[Page %i]\n", page->pageNum);
+	pos += sprintf(message + pos, "[Page %i]\n", page->pageNumbering);
 
 	for (i = 1; i <= PAGE_SIZE; i++)
-		pos += sprintf(message + pos, "%02X%s%s", page->data[i], (i % 8) ? "" : " ", (i % 64) ? "" : "\n");
+		pos += sprintf(message + pos, "%02X%s%s", page->datas[i], (i % 8) ? "" : " ", (i % 64) ? "" : "\n");
 
 	return message;
 }
 
 void
-printStrat (BM_BufferPool *const bm)
+printStrat (BM_BufferPool *const bufferManage)
 {
-	switch (bm->strategy)
+	switch (bufferManage->strategies)
 	{
 	case RS_FIFO:
 		printf("FIFO");
@@ -99,7 +99,7 @@ printStrat (BM_BufferPool *const bm)
 		printf("LRU-K");
 		break;
 	default:
-		printf("%i", bm->strategy);
+		printf("%i", bufferManage->strategies);
 		break;
 	}
 }

@@ -21,16 +21,16 @@ typedef int PageNumber;
 #define NO_PAGE -1
 
 typedef struct BM_BufferPool {
-	char *pageFile;
-	int numPages;
-	ReplacementStrategy strategy;
+	char *pageFiles;
+	int numberOfPages;
+	ReplacementStrategy strategies;
 	void *mgmtData; // use this one to store the bookkeeping info your buffer
 	// manager needs for a buffer pool
 } BM_BufferPool;
 
 typedef struct BM_PageHandle {
-	PageNumber pageNum;
-	char *data;
+	PageNumber pageNumbering;
+	char *datas;
 } BM_PageHandle;
 
 // convenience macros
@@ -41,24 +41,24 @@ typedef struct BM_PageHandle {
 		((BM_PageHandle *) malloc (sizeof(BM_PageHandle)))
 
 // Buffer Manager Interface Pool Handling
-RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName, 
-		const int numPages, ReplacementStrategy strategy,
-		void *stratData);
-RC shutdownBufferPool(BM_BufferPool *const bm);
-RC forceFlushPool(BM_BufferPool *const bm);
+RC initBufferPool(BM_BufferPool *const bufferManage, const char *const pageFileName, 
+		const int numberOfPages, ReplacementStrategy strategies,
+		void *strategyData);
+RC shutdownBufferPool(BM_BufferPool *const bufferManage);
+RC forceFlushPool(BM_BufferPool *const bufferManage);
 
 // Buffer Manager Interface Access Pages
-RC markDirty (BM_BufferPool *const bm, BM_PageHandle *const page);
-RC unpinPage (BM_BufferPool *const bm, BM_PageHandle *const page);
-RC forcePage (BM_BufferPool *const bm, BM_PageHandle *const page);
-RC pinPage (BM_BufferPool *const bm, BM_PageHandle *const page, 
-		const PageNumber pageNum);
+RC markDirty (BM_BufferPool *const bufferManage, BM_PageHandle *const page);
+RC unpinPage (BM_BufferPool *const bufferManage, BM_PageHandle *const page);
+RC forcePage (BM_BufferPool *const bufferManage, BM_PageHandle *const page);
+RC pinPage (BM_BufferPool *const bufferManage, BM_PageHandle *const page, 
+		const PageNumber pageNumbering);
 
 // Statistics Interface
-PageNumber *getFrameContents (BM_BufferPool *const bm);
-bool *getDirtyFlags (BM_BufferPool *const bm);
-int *getFixCounts (BM_BufferPool *const bm);
-int getNumReadIO (BM_BufferPool *const bm);
-int getNumWriteIO (BM_BufferPool *const bm);
+PageNumber *getFrameContents (BM_BufferPool *const bufferManage);
+bool *getDirtyFlags (BM_BufferPool *const bufferManage);
+int *getFixCounts (BM_BufferPool *const bufferManage);
+int getNumReadIO (BM_BufferPool *const bufferManage);
+int getNumWriteIO (BM_BufferPool *const bufferManage);
 
 #endif
