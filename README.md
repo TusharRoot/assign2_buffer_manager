@@ -1,172 +1,113 @@
-# Assignment 2: Buffer Manager
+# CS_525 Assignment 2 - Buffer Manager
 
-- Yousef Suleiman A20463895
 
-## Building
+The buffer manager manages a fixed number of
+pages in memory that represent pages from a page file managed by the storage manager implemented in assignment 1. The memory pages managed by the buffer manager are called page frames or frames for short.
 
-To build the buffer manager as well the first set of test cases in `test_assign2_1.c`, use
+Aim - Creating a basic buffer manager pool. It has caches file counts into memory from disk. In this buffer manager will look for a certain page asked from user into its cache and if its not found in cache it will load from disk. Cache will be of pre defined size and buffer pool will decide which page to replace. 
+## Running Tests
 
-```sh
+To build the buffer manager as well the first set of test cases in test_assign2_1.c, use
+./test_assign2_1.o
+```bash
 make
 ./test_assign2_1.o
 ```
-
-To build the second set of test cases in `test_assign2_2.c`, use
-
-```sh
+To build the second set of test cases in test_assign2_2.c, use run the following command -
+```bash
 make test_assign2_2
 ./test_assign2_2.o
 ```
+There is also another set of tests for a hash table coded for this assignment in hash_table.c. To build this set of test cases in test_hash_table.c, use run the following command - 
 
-There is a third test case made to test some simple functionality. To build this set of test cases in `test_assign2_3.c`, use
-
-```sh
-make test_assign2_3
-./test_assign2_3.o
-```
-
-There is also another set of tests for a hash table coded for this assignment in `hash_table.c`. To build this set of test cases in `test_hash_table.c`, use
-
-```sh
+```bash
 make test_hash_table
 ./test_hash_table.o
 ```
-
 To clean the solution use
-
-```sh
+```bash
 make clean
 ```
 
-## Explanation of Solution
-
-### Hash Table
-
-A hash table was created (header file `hash_table.h` and implement in `hash_table.c`) to implement the page table. It maps `int -> int` using modulo to index into a set of flexible array lists.
-
-### Additional Definitions
-
-These definitions are internal and will not be exposed to the user.
-
-```c
-typedef unsigned int TimeStamp;
+## Solution Description
+1] Data Structure
+```bash
+BM_BufferPool
 ```
+This stores information about buffer pool: pageFileName
+, page frames count, page replacement stategy, pointer to bookkeeping data
 
-- instead of using something like `time.h`,  we simply used an `int` counter to keep track of timestamps
-
-```c
-typedef struct BM_PageFrame;
+```bash
+BM PageHandle
 ```
+position of page in file is stored in -pageNum-. Page number of first data page is 0. 
 
-- this internal `struct` is used to store a frame's
-  - `char*` data pointer
-  - the page number associated with the frame
-  - the frame index in the array of frames
-  - the `fixCount` or number of pins
-  - dirty and occupied bools
-  - as well as a time stamp
-
-```c
-typedef struct BM_Metadata;
+2] Buffer Pool Functions
+```bash
+initBufferPool
 ```
+This will create a new buffer pool with -numPages- page frames using the page replacement
+strategy. The pool is used to cache pages from the page file with name -pageFileName-.
+This methode will not generate new page file. The page file should initially exist and all page frames empty.
 
-- this internal `struct`'s data is stored into the `BM_BufferPool`'s `mgmtData`. It holds
-  - the page frame array of `BM_PageFrame`
-  - a page table (using `hash_table.h`)
-  - the page file handle 
-  - a global time stamp (this will be used to assign time stamps to individual frames)
-  - an index `queueIndex` that is used to treat the page frame array as a queue by cycling over its unpinned pages
-  - as well as statistical counters for number of reads and writes
 
-### Buffer Manager Interface Pool Handling
-
-```c
-RC initBufferPool(BM_BufferPool *const bm, const char *const pageFileName, const int numPages, ReplacementStrategy strategy, void *stratData)
+```bash
+shutdownBufferPool
 ```
+This frees all resources associated with buffer pool. If there are dirty pages it will be written to disk before destroying the buffer pool. It is an error to shutdown a buffer pool that has pinned pages.
 
-- initializes a buffer pool by setting up metadata and data structures
-- allocates memory for page frames and initializes them with default values
 
-```c
-RC shutdownBufferPool(BM_BufferPool *const bm)
+```bash
+forceFlushPool 
 ```
+all dirty pages from the buffer pool to be written to disk.
 
-- shuts down a buffer pool checking that there are no pinned pages
-- writes dirty pages back to disk (using `forceFlushPool`), frees memory, and closes the page file
-
-```c
-RC forceFlushPool(BM_BufferPool *const bm)
+3] Page Management Functions
+```bash
+pinPage
 ```
+The buffer manager is responsible to set the
+-pageNum- field of the page handle passed to the method. The data field should point to the area in memory storing the content of the page.
 
-- writes all dirty & unpinned pages to disk
-- it also increments the timestamp for all pages in the order it flushes
-
-### Buffer Manager Interface Access Pages
-
-```c
-RC markDirty (BM_BufferPool *const bm, BM_PageHandle *const page)
+```bash
+unpinPage
 ```
-
-- marks page as dirty and increments timestamp
-
-```c
-RC unpinPage (BM_BufferPool *const bm, BM_PageHandle *const page)
+The -pageNum- field of page should be used to figure out which -page- to unpin.
+```bash
+markDirty
 ```
-
-- unpins the page by decrementing `fixCount` and increments timestamp
-
-```c
-RC forcePage (BM_BufferPool *const bm, BM_PageHandle *const page)
+This will mark page as dirty.
+```bash
+forcePage 
 ```
+This will write the current content of page back to page file on disk.
 
-- writes the page to disk (regardless if dirty) only if the page is not pinned (i.e. `fixCount == 0`)
-- increments timestamp
-- clears dirty bool
-
-```c
-RC pinPage (BM_BufferPool *const bm, BM_PageHandle *const page, 
+4] Statistics Functions
+```bash
+getFrameContents
 ```
-
-- checks if the page is already in memory using the page table and updates the page handle
-- if its not there, it will use either the FIFO or LRU replacement policy
-  - these are defined in `replacementFIFO` and `replacementLRU`
-- if the policies return `NULL` pointers it indicates no pages could be evicted as they are all occupied & pinned
-- otherwise, if it is not `NULL`, the page was successfully evicted & written to disk (if dirty) such that it can be used
-
-### Statistics Interface
-
-```c
-PageNumber *getFrameContents (BM_BufferPool *const bm)
-bool *getDirtyFlags (BM_BufferPool *const bm)
-int *getFixCounts (BM_BufferPool *const bm)
+function returns an array of PageNumbers. For an empty page frame NO PAGE is used.
+```bash
+getDirtyFlags
 ```
-
-- these functions simply iterate over the page frame array and assign values to an dynamically allocated array for statistics
-- the user is responsible for calling free on the returned array
-
-```c
-int getNumReadIO (BM_BufferPool *const bm)
-int getNumWriteIO (BM_BufferPool *const bm)
+This returns array of bools as TRUE where page stored at that index is dirty. Empty pages are clean.
+```bash
+getFixCounts
 ```
-
-- these functions simply return the associated counters
-- note that the counters are incremented after `writeBlock` or `readBlock` is called
-
-### Replacement Policies
-
-These 2 functions will use the specified replacement policy to find an available frame or evict the frame's page (writing to disk if needed). They will will also deal with incrementing the timestamp for an evicted frame. The caller will be responsible for setting the metadata (i.e. in `pinPage`).
-
-```c
-BM_PageFrame *replacementFIFO(BM_BufferPool *const bm)
+ It will give array of ints of fix count of the page stored in current index page frame. It will give 0 for empty page frames.
+```bash
+getNumReadIO
 ```
-
-- keep cycling the `queueIndex` in FIFO order until a frame is found that is not pinned
-- if the cycle comes back to where it began, it means that all pages are pinned and `NULL` is returned
-- otherwise, the index is used to evict the page in the frame (and write to disk if needed)
-
-```c
-BM_PageFrame *replacementLRU(BM_BufferPool *const bm)
+It will give number of pages read from disk since initialization of buffer pool.
+```bash
+getNumWriteIO
 ```
+returns the number of pages written to the page file since the buffer pool has been
+initialized.
 
-- iterates over the page frames looking the the unpinned page with the smallest timestamp
-- if all the time stamps are pinned, then `NULL` is returned
+## Authors
+Akshar Patel - A20563554
+
+Ankita Chirame - A20543083
+
+Tushar Patel - A20561012
